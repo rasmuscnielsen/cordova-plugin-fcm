@@ -214,18 +214,25 @@ fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler
     // Pring full message.
     NSLog(@"%@", userInfo);
     NSError *error;
-    
+
     NSDictionary *userInfoMutable = [userInfo mutableCopy];
-    
-	//USER NOT TAPPED NOTIFICATION
-    if (application.applicationState == UIApplicationStateActive) {
+
+    // Has user tapped the notificaiton?
+    // UIApplicationStateActive   - app is currently active
+    // UIApplicationStateInactive - app is transitioning from background to
+    //                              foreground (user taps notification)
+
+    UIApplicationState state = application.applicationState;
+    if (application.applicationState == UIApplicationStateActive
+        || application.applicationState == UIApplicationStateInactive) {
         [userInfoMutable setValue:@(NO) forKey:@"wasTapped"];
         NSLog(@"app active");
         NSData *jsonData = [NSJSONSerialization dataWithJSONObject:userInfoMutable
                                                            options:0
                                                              error:&error];
         [FCMPlugin.fcmPlugin notifyOfMessage:jsonData];
-    // app is in background or in stand by (NOTIFICATION WILL BE TAPPED)
+
+    // app is in background
     }
 
     completionHandler(UIBackgroundFetchResultNoData);
