@@ -105,7 +105,11 @@ NSString *const kGCMMessageIDKey = @"gcm.message_id";
 
 // [START message_handling]
 // Receive displayed notifications for iOS 10 devices.
+
+// Note on the pragma: When compiling with iOS 10 SDK, include methods that
+//                     handle notifications using notification center.
 #if defined(__IPHONE_10_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_10_0
+
 // Handle incoming notification messages while app is in the foreground.
 - (void)userNotificationCenter:(UNUserNotificationCenter *)center
        willPresentNotification:(UNNotification *)notification
@@ -158,9 +162,21 @@ didReceiveNotificationResponse:(UNNotificationResponse *)response
     
     completionHandler();
 }
-#else
+#endif
+
 // [START receive_message in background iOS < 10]
-- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
+
+// Include the iOS < 10 methods for handling notifications for when running on iOS < 10.
+// As in, even if you compile with iOS 10 SDK, when running on iOS 9 the only way to get
+// notifications is the didReceiveRemoteNotification.
+
+- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo
+{
+    // Short-circuit when actually running iOS 10+, let notification centre methods handle the notification.
+    if (NSFoundationVersionNumber >= NSFoundationVersionNumber_iOS_9_x_Max) {
+        return;
+    }
+
     NSLog(@"Message ID: %@", userInfo[@"gcm.message_id"]);
     
     NSError *error;
@@ -183,6 +199,11 @@ didReceiveNotificationResponse:(UNNotificationResponse *)response
 - (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo
 fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler
 {
+    // Short-circuit when actually running iOS 10+, let notification centre methods handle the notification.
+    if (NSFoundationVersionNumber >= NSFoundationVersionNumber_iOS_9_x_Max) {
+        return;
+    }
+
     // If you are receiving a notification message while your app is in the background,
     // this callback will not be fired till the user taps on the notification launching the application.
     // TODO: Handle data of notification
@@ -210,7 +231,6 @@ fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler
     completionHandler(UIBackgroundFetchResultNoData);
 }
 // [END receive_message iOS < 10]
-#endif
 // [END message_handling]
 
 
